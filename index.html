@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasyDine Frontend App</title>
+  <style>
+    :root {
+      --bg: #0c0f15;
+      --panel: #141925;
+      --border: #2a3040;
+      --text: #eaf0ff;
+      --muted: #9ba8c7;
+      --accent: #6aa6ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at top, #1b2233, var(--bg) 55%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+
+    .app-shell {
+      width: min(980px, 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(20, 25, 37, 0.96);
+      padding: 1.5rem;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+      margin-bottom: 0.5rem;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.9rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .screen-link {
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      background: #171d2a;
+      transition: 0.2s ease;
+    }
+
+    .screen-link:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .screen-link h2 {
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .screen-link p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .start-box {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    code {
+      color: var(--text);
+      background: #0d111a;
+      padding: 0.1rem 0.35rem;
+      border-radius: 5px;
+      border: 1px solid #20283b;
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <h1>EasyDine — Self-Running Frontend</h1>
+    <p class="sub">Open this once and use any screen below. All HTML pages are now available through one app entry point.</p>
+
+    <section class="screens">
+      <a class="screen-link" href="customer-menu.html">
+        <h2>Customer Menu</h2>
+        <p>Menu browsing, cart interactions, and order tracking journey for diners.</p>
+      </a>
+
+      <a class="screen-link" href="staff-dashboard.html">
+        <h2>Staff Dashboard</h2>
+        <p>Service team operations screen for in-house order handling and updates.</p>
+      </a>
+
+      <a class="screen-link" href="kitchen-display.html">
+        <h2>Kitchen Display</h2>
+        <p>Live kitchen workflow board with order statuses and preparation flow.</p>
+      </a>
+    </section>
+
+    <div class="start-box">
+      Run the app locally with:
+      <br />
+      <code>npm run start</code>
+      <br />
+      Then open <code>http://localhost:4173</code>.
+    </div>
+  </main>
+</body>
+</html>
