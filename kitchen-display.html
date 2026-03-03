@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitchen Display — ROMS</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #0a0a0c;
+    --surface:    #111115;
+    --card:       #16161c;
+    --card-hover: #1c1c24;
+    --border:     #25252e;
+    --border-lt:  #33333f;
+    --text:       #e8e8f0;
+    --muted:      #5a5a70;
+    --dim:        #3a3a4a;
+
+    --new:        #ff6b35;
+    --new-bg:     rgba(255,107,53,0.08);
+    --new-border: rgba(255,107,53,0.25);
+
+    --prog:       #f7c325;
+    --prog-bg:    rgba(247,195,37,0.07);
+    --prog-border:rgba(247,195,37,0.22);
+
+    --ready:      #33d17a;
+    --ready-bg:   rgba(51,209,122,0.07);
+    --ready-border:rgba(51,209,122,0.22);
+  }
+
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    height: 56px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .topbar-left {
+    display: flex; align-items: center; gap: 1rem;
+  }
+
+  .logo {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .logo span { color: var(--prog); }
+
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ready);
+    box-shadow: 0 0 8px var(--ready);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+  .topbar-clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .topbar-stats {
+    display: flex; gap: 1.5rem;
+  }
+  .stat-item {
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-top: 0.15rem;
+  }
+
+  /* COLUMNS */
+  .columns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .col:last-child { border-right: none; }
+
+  .col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .col-title {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+  .col-indicator {
+    width: 8px; height: 8px;
+    border-radius: 1px;
+  }
+
+  .new-col .col-indicator    { background: var(--new); box-shadow: 0 0 8px var(--new); }
+  .prog-col .col-indicator   { background: var(--prog); box-shadow: 0 0 8px var(--prog); }
+  .ready-col .col-indicator  { background: var(--ready); box-shadow: 0 0 8px var(--ready); }
+
+  .new-col .col-title   { color: var(--new); }
+  .prog-col .col-title  { color: var(--prog); }
+  .ready-col .col-title { color: var(--ready); }
+
+  .col-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--border);
+    padding: 0.15rem 0.5rem;
+    border-radius: 2rem;
+  }
+
+  .col-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* ORDER CARD */
+  .order-card {
+    border-radius: 0.6rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+    overflow: hidden;
+    transition: all 0.25s;
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn {
+    from { opacity:0; transform: translateY(-10px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .order-card:hover { background: var(--card-hover); border-color: var(--border-lt); }
+
+  .new-col   .order-card { border-color: var(--new-border); background: var(--new-bg); }
+  .prog-col  .order-card { border-color: var(--prog-border); background: var(--prog-bg); }
+  .ready-col .order-card { border-color: var(--ready-border); background: var(--ready-bg); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-table {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .new-col   .card-table { color: var(--new); }
+  .prog-col  .card-table { color: var(--prog); }
+  .ready-col .card-table { color: var(--ready); }
+
+  .card-order-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .card-timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2rem;
+    background: var(--border);
+    color: var(--text);
+  }
+  .card-timer.urgent { background: rgba(255,107,53,0.15); color: var(--new); }
+
+  /* ITEMS */
+  .card-items { padding: 0.5rem 0.85rem 0.75rem; }
+
+  .card-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .card-item:last-child { border-bottom: none; }
+
+  .item-qty {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: inherit;
+    min-width: 1.5rem;
+  }
+  .new-col .item-qty   { color: var(--new); }
+  .prog-col .item-qty  { color: var(--prog); }
+  .ready-col .item-qty { color: var(--ready); }
+
+  .item-name { flex: 1; color: var(--text); }
+  .item-note { font-size: 0.72rem; color: var(--muted); font-style: italic; }
+
+  /* ACTION BUTTON */
+  .card-action {
+    padding: 0 0.85rem 0.75rem;
+  }
+  .action-btn {
+    width: 100%;
+    border: none;
+    border-radius: 0.4rem;
+    padding: 0.55rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .new-col .action-btn {
+    background: var(--new);
+    color: #fff;
+  }
+  .new-col .action-btn:hover { background: #ff8555; transform: translateY(-1px); }
+  .prog-col .action-btn {
+    background: var(--prog);
+    color: #0a0a0c;
+  }
+  .prog-col .action-btn:hover { background: #ffd050; transform: translateY(-1px); }
+  .ready-col .action-btn {
+    background: var(--border);
+    color: var(--ready);
+    border: 1px solid var(--ready-border);
+  }
+  .ready-col .action-btn:disabled {
+    opacity: 0.5; cursor: default;
+  }
+
+  .empty-col {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .empty-icon { font-size: 2rem; opacity: 0.15; }
+  .empty-text { font-size: 0.75rem; color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border-lt);
+    color: var(--text);
+    font-size: 0.85rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 2rem;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo"><span>ROMS</span> · Kitchen</div>
+    <div class="live-dot"></div>
+    <div class="topbar-clock" id="clock">--:--:--</div>
+  </div>
+  <div class="topbar-stats">
+    <div class="stat-item"><div class="stat-val" id="statNew" style="color:var(--new)">0</div><div class="stat-label">New</div></div>
+    <div class="stat-item"><div class="stat-val" id="statProg" style="color:var(--prog)">0</div><div class="stat-label">In Progress</div></div>
+    <div class="stat-item"><div class="stat-val" id="statReady" style="color:var(--ready)">0</div><div class="stat-label">Ready</div></div>
+  </div>
+</div>
+
+<div class="columns">
+  <div class="col new-col">
+    <div class="col-header">
+      <div class="col-title"><div class="col-indicator"></div>New Orders</div>
+      <div class="col-count" id="newCount">0</div>
+    </div>
+    <div class="col-body" id="newCol"></div>
+  </div>
+  <div class="col prog-col">
+    <div class="col-header">
+      <div class="col-title"><div class="col-indicator"></div>In Progress</div>
+      <div class="col-count" id="progCount">0</div>
+    </div>
+    <div class="col-body" id="progCol"></div>
+  </div>
+  <div class="col ready-col">
+    <div class="col-header">
+      <div class="col-title"><div class="col-indicator"></div>Ready for Pickup</div>
+      <div class="col-count" id="readyCount">0</div>
+    </div>
+    <div class="col-body" id="readyCol"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// --- State ---
+let orders = [
+  { id:1001, table:3, items:[{qty:2,name:'Paneer Tikka'},{qty:1,name:'Mango Lassi',note:'Less sweet'}], createdAt: Date.now()-420000, status:'ORDERED' },
+  { id:1002, table:7, items:[{qty:1,name:'Butter Chicken'},{qty:2,name:'Garlic Naan'},{qty:1,name:'Dal Makhani'}], createdAt: Date.now()-180000, status:'ORDERED' },
+  { id:1003, table:1, items:[{qty:1,name:'Lamb Rogan Josh'},{qty:1,name:'Laccha Paratha'}], createdAt: Date.now()-600000, status:'IN_PROGRESS' },
+  { id:1004, table:9, items:[{qty:3,name:'Mushroom Crispy'},{qty:2,name:'Fresh Lime Soda'}], createdAt: Date.now()-900000, status:'READY' },
+];
+let nextId = 1005;
+
+function elapsed(ts) {
+  const s = Math.floor((Date.now()-ts)/1000);
+  if(s < 60) return s + 's';
+  return Math.floor(s/60) + 'm ' + (s%60) + 's';
+}
+
+function isUrgent(ts, status) {
+  const mins = (Date.now()-ts)/60000;
+  if(status === 'ORDERED' && mins > 5) return true;
+  if(status === 'IN_PROGRESS' && mins > 10) return true;
+  return false;
+}
+
+function renderCard(order, colClass) {
+  const urgent = isUrgent(order.createdAt, order.status);
+  const actionLabel = order.status === 'ORDERED' ? 'Start Preparing →' : order.status === 'IN_PROGRESS' ? 'Mark as Ready ✓' : '— Awaiting Pickup —';
+  const actionDisabled = order.status === 'READY' ? 'disabled' : '';
+
+  return `
+    <div class="order-card" id="card-${order.id}">
+      <div class="card-header">
+        <div>
+          <div class="card-table">Table ${order.table}</div>
+          <div class="card-order-id">#${order.id}</div>
+        </div>
+        <div class="card-timer ${urgent?'urgent':''}" id="timer-${order.id}">${elapsed(order.createdAt)}</div>
+      </div>
+      <div class="card-items">
+        ${order.items.map(i => `
+          <div class="card-item">
+            <span class="item-qty">${i.qty}×</span>
+            <span class="item-name">${i.name}</span>
+            ${i.note ? `<span class="item-note">${i.note}</span>` : ''}
+          </div>`).join('')}
+      </div>
+      <div class="card-action">
+        <button class="action-btn" onclick="advanceOrder(${order.id})" ${actionDisabled}>${actionLabel}</button>
+      </div>
+    </div>`;
+}
+
+function render() {
+  const newOrds  = orders.filter(o => o.status === 'ORDERED');
+  const progOrds = orders.filter(o => o.status === 'IN_PROGRESS');
+  const readyOrds = orders.filter(o => o.status === 'READY');
+
+  document.getElementById('newCol').innerHTML  = newOrds.length  ? newOrds.map(o=>renderCard(o,'new-col')).join('')  : '<div class="empty-col"><div class="empty-icon">📭</div><div class="empty-text">No new orders</div></div>';
+  document.getElementById('progCol').innerHTML = progOrds.length ? progOrds.map(o=>renderCard(o,'prog-col')).join('') : '<div class="empty-col"><div class="empty-icon">⏳</div><div class="empty-text">Nothing in progress</div></div>';
+  document.getElementById('readyCol').innerHTML= readyOrds.length? readyOrds.map(o=>renderCard(o,'ready-col')).join(''): '<div class="empty-col"><div class="empty-icon">✅</div><div class="empty-text">All delivered</div></div>';
+
+  document.getElementById('newCount').textContent  = newOrds.length;
+  document.getElementById('progCount').textContent = progOrds.length;
+  document.getElementById('readyCount').textContent= readyOrds.length;
+  document.getElementById('statNew').textContent   = newOrds.length;
+  document.getElementById('statProg').textContent  = progOrds.length;
+  document.getElementById('statReady').textContent = readyOrds.length;
+}
+
+function advanceOrder(id) {
+  const order = orders.find(o=>o.id===id);
+  if(!order) return;
+  if(order.status === 'ORDERED') {
+    order.status = 'IN_PROGRESS';
+    showToast(`Order #${id} (Table ${order.table}) → In Progress`);
+  } else if(order.status === 'IN_PROGRESS') {
+    order.status = 'READY';
+    showToast(`Order #${id} (Table ${order.table}) → Ready! Notifying waiter...`);
+  }
+  render();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0') + ':' +
+    String(now.getSeconds()).padStart(2,'0');
+}
+
+// Update timers
+function updateTimers() {
+  orders.forEach(o => {
+    const el = document.getElementById(`timer-${o.id}`);
+    if(el) {
+      el.textContent = elapsed(o.createdAt);
+      el.classList.toggle('urgent', isUrgent(o.createdAt, o.status));
+    }
+  });
+}
+
+// Simulate new orders coming in
+let simCount = 0;
+const simOrders = [
+  [12000, { table:2, items:[{qty:2,name:'Chicken 65'},{qty:1,name:'Masala Chai'}] }],
+  [22000, { table:6, items:[{qty:1,name:'Palak Paneer'},{qty:2,name:'Garlic Naan'},{qty:1,name:'Gulab Jamun'}] }],
+  [38000, { table:4, items:[{qty:1,name:'Kulfi Falooda'},{qty:2,name:'Fresh Lime Soda'}] }],
+];
+simOrders.forEach(([delay, data]) => {
+  setTimeout(() => {
+    orders.unshift({ ...data, id: nextId++, createdAt: Date.now(), status:'ORDERED' });
+    render();
+    showToast(`New order from Table ${data.table}!`);
+    // play a beep
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      osc.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.start(); osc.stop(ctx.currentTime + 0.15);
+    } catch(e){}
+  }, delay);
+});
+
+render();
+setInterval(updateClock, 1000);
+setInterval(updateTimers, 1000);
+updateClock();
+</script>
+</body>
+</html>

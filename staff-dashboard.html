@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Dashboard — ROMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #f4f1ec;
+    --surface:  #faf8f4;
+    --white:    #ffffff;
+    --border:   #e4dfd6;
+    --border-md:#d4cec4;
+    --text:     #1a1714;
+    --muted:    #8a8278;
+    --dim:      #bbb3a8;
+
+    --amber:    #c8821a;
+    --amber-lt: #f0a835;
+    --amber-bg: #fef3e2;
+
+    --blue:     #2563eb;
+    --blue-bg:  #eff6ff;
+    --blue-bd:  #bfdbfe;
+
+    --green:    #16a34a;
+    --green-bg: #f0fdf4;
+    --green-bd: #bbf7d0;
+
+    --orange:   #ea580c;
+    --orange-bg:#fff7ed;
+    --orange-bd:#fed7aa;
+
+    --red:      #dc2626;
+    --red-bg:   #fef2f2;
+    --red-bd:   #fecaca;
+
+    --purple:   #7c3aed;
+    --purple-bg:#f5f3ff;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* SIDEBAR + MAIN LAYOUT */
+  .layout {
+    display: flex;
+    flex: 1;
+    min-height: 100vh;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    background: var(--text);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .sidebar-brand {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .brand-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--amber-lt);
+    letter-spacing: -0.01em;
+  }
+  .brand-sub {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 0.15rem;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .nav-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.25);
+    padding: 0.75rem 0.75rem 0.3rem;
+    margin-top: 0.5rem;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+  .nav-item.active { background: var(--amber); color: #1a1714; font-weight: 600; }
+  .nav-icon { font-size: 1rem; width: 1.2rem; text-align: center; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 2rem;
+    min-width: 1.2rem;
+    text-align: center;
+  }
+  .nav-item.active .nav-badge { background: rgba(0,0,0,0.2); color: #fff; }
+
+  .sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .staff-chip {
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .staff-avatar {
+    width: 30px; height: 30px;
+    background: var(--amber);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1a1714;
+    flex-shrink: 0;
+  }
+  .staff-info { overflow: hidden; }
+  .staff-name { font-size: 0.8rem; color: rgba(255,255,255,0.8); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .staff-role { font-size: 0.68rem; color: rgba(255,255,255,0.3); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* MAIN CONTENT */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  /* TOP BAR */
+  .main-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .main-header-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .main-header-right {
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .live-badge {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--green);
+    background: var(--green-bg);
+    border: 1px solid var(--green-bd);
+    padding: 0.25rem 0.6rem;
+    border-radius: 2rem;
+    font-weight: 600;
+  }
+  .live-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .clock { font-size: 0.875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .content { padding: 1.5rem 2rem; }
+
+  /* STAT CARDS */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .stat-card-left {}
+  .stat-card-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .stat-card-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+    letter-spacing: 0.03em;
+  }
+  .stat-card-icon {
+    width: 40px; height: 40px;
+    border-radius: 0.5rem;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+  }
+
+  /* TABLE GRID */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .section-action {
+    font-size: 0.78rem;
+    color: var(--amber);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+  }
+
+  .tables-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .table-tile {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .table-tile:hover { border-color: var(--amber); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+  .table-tile.occupied { border-color: var(--amber); background: var(--amber-bg); }
+  .table-tile.free { opacity: 0.7; }
+
+  .table-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+  .table-status {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .occupied .table-status { color: var(--amber); }
+  .free .table-status { color: var(--dim); }
+  .table-orders { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+
+  /* ORDERS LIST */
+  .orders-table {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .orders-table-header {
+    display: grid;
+    grid-template-columns: 60px 80px 1fr 120px 90px 130px;
+    padding: 0.65rem 1.25rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    gap: 0.5rem;
+  }
+
+  .order-row {
+    display: grid;
+    grid-template-columns: 60px 80px 1fr 120px 90px 130px;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+  .order-row:last-child { border-bottom: none; }
+  .order-row:hover { background: var(--bg); }
+
+  .order-id {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .table-tag {
+    background: var(--amber-bg);
+    color: var(--amber);
+    border: 1px solid #f0cfa0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2rem;
+    text-align: center;
+  }
+  .items-preview { color: var(--muted); font-size: 0.8rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .amount { font-weight: 600; font-family: 'Space Grotesk', sans-serif; }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 0.25rem 0.65rem;
+    border-radius: 2rem;
+    white-space: nowrap;
+  }
+  .status-badge.ORDERED     { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-bd); }
+  .status-badge.IN_PROGRESS { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-bd); }
+  .status-badge.READY       { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-bd); }
+  .status-badge.DELIVERED   { background: var(--bg);        color: var(--dim);    border: 1px solid var(--border); }
+
+  .action-cell {
+    display: flex; gap: 0.4rem;
+  }
+  .act-btn {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 0.35rem;
+    cursor: pointer;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.15s;
+  }
+  .act-btn.start   { background: var(--blue);   color: #fff; }
+  .act-btn.ready   { background: var(--green);  color: #fff; }
+  .act-btn.deliver { background: var(--purple);  color: #fff; }
+  .act-btn:hover { opacity: 0.85; }
+  .act-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* WAITER VIEW */
+  .ready-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .ready-card {
+    background: var(--white);
+    border: 2px solid var(--green-bd);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    animation: pop 0.3s ease-out;
+  }
+  @keyframes pop { from { transform: scale(0.95); opacity:0; } to { transform: scale(1); opacity:1; } }
+  .ready-card-header {
+    background: var(--green-bg);
+    padding: 0.75rem 1rem;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--green-bd);
+  }
+  .ready-card-table {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .ready-card-id { font-size: 0.75rem; color: var(--muted); }
+  .ready-card-body { padding: 0.75rem 1rem; }
+  .ready-item { font-size: 0.85rem; padding: 0.3rem 0; border-bottom: 1px solid var(--border); display: flex; gap: 0.5rem; }
+  .ready-item:last-child { border: none; }
+  .ri-qty { font-weight: 700; color: var(--green); min-width: 1.5rem; }
+  .ready-card-footer { padding: 0.75rem 1rem; }
+  .deliver-btn {
+    width: 100%; padding: 0.65rem;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .deliver-btn:hover { background: #15803d; transform: translateY(-1px); }
+
+  /* TABS */
+  .view-tabs {
+    display: none;
+  }
+
+  /* Notification pill */
+  .notif {
+    position: fixed;
+    top: 70px; right: 1.5rem;
+    background: var(--text);
+    color: #fff;
+    padding: 0.65rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    z-index: 999;
+    transform: translateX(120%);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    max-width: 260px;
+    display: flex; align-items: center; gap: 0.5rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+  .notif.show { transform: translateX(0); }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">ROMS</div>
+      <div class="brand-sub">Spice Garden</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Operations</div>
+      <button class="nav-item active" onclick="switchView('counter',this)">
+        <span class="nav-icon">🏪</span> Counter View
+        <span class="nav-badge" id="navBadge">4</span>
+      </button>
+      <button class="nav-item" onclick="switchView('waiter',this)">
+        <span class="nav-icon">🍽️</span> Waiter View
+        <span class="nav-badge" id="waiterBadge" style="display:none">0</span>
+      </button>
+      <div class="nav-label">Management</div>
+      <button class="nav-item" onclick="switchView('tables',this)">
+        <span class="nav-icon">🪑</span> Table Status
+      </button>
+      <button class="nav-item" onclick="switchView('menu',this)">
+        <span class="nav-icon">📋</span> Menu Manager
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="staff-chip">
+        <div class="staff-avatar">RK</div>
+        <div class="staff-info">
+          <div class="staff-name">Ravi Kumar</div>
+          <div class="staff-role">Counter Staff</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="main-header">
+      <div class="main-header-title" id="mainTitle">Counter Overview</div>
+      <div class="main-header-right">
+        <div class="live-badge"><div class="live-dot"></div>Live</div>
+        <div class="clock" id="clock">--:--</div>
+      </div>
+    </div>
+
+    <!-- COUNTER VIEW -->
+    <div id="view-counter" class="content">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-card-val" id="sTotal" style="color:var(--text)">4</div>
+            <div class="stat-card-label">Active Orders</div>
+          </div>
+          <div class="stat-card-icon" style="background:var(--amber-bg)">📦</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-card-val" id="sNew" style="color:var(--blue)">2</div>
+            <div class="stat-card-label">New / Ordered</div>
+          </div>
+          <div class="stat-card-icon" style="background:var(--blue-bg)">🆕</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-card-val" id="sProg" style="color:var(--orange)">1</div>
+            <div class="stat-card-label">In Progress</div>
+          </div>
+          <div class="stat-card-icon" style="background:var(--orange-bg)">👨‍🍳</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-card-val" id="sReady" style="color:var(--green)">1</div>
+            <div class="stat-card-label">Ready / Pickup</div>
+          </div>
+          <div class="stat-card-icon" style="background:var(--green-bg)">✅</div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">All Active Orders</div>
+      </div>
+
+      <div class="orders-table">
+        <div class="orders-table-header">
+          <div>Order</div><div>Table</div><div>Items</div>
+          <div>Amount</div><div>Status</div><div>Action</div>
+        </div>
+        <div id="ordersList"></div>
+      </div>
+    </div>
+
+    <!-- WAITER VIEW -->
+    <div id="view-waiter" class="content" style="display:none">
+      <div class="section-header">
+        <div class="section-title">🔔 Ready for Pickup</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Orders the kitchen has marked as ready</div>
+      </div>
+      <div class="ready-cards" id="readyCards"></div>
+      <div id="noReady" style="display:none;text-align:center;padding:4rem;color:var(--dim)">
+        <div style="font-size:3rem;margin-bottom:1rem">☕</div>
+        <div style="font-size:0.9rem">No orders ready for pickup right now</div>
+      </div>
+    </div>
+
+    <!-- TABLES VIEW -->
+    <div id="view-tables" class="content" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Table Status</div>
+      </div>
+      <div class="tables-grid" id="tablesGrid"></div>
+    </div>
+
+    <!-- MENU VIEW -->
+    <div id="view-menu" class="content" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Menu Manager</div>
+      </div>
+      <div class="orders-table">
+        <div class="orders-table-header" style="grid-template-columns:1fr 100px 90px 80px">
+          <div>Item</div><div>Category</div><div>Price</div><div>Available</div>
+        </div>
+        <div id="menuList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="notif" id="notif">
+  <span>🔔</span><span id="notifText"></span>
+</div>
+
+<script>
+const MENU_ITEMS = [
+  {id:1,name:'Paneer Tikka',cat:'Starters',price:280,available:true,veg:true},
+  {id:2,name:'Chicken 65',cat:'Starters',price:320,available:true,veg:false},
+  {id:3,name:'Mushroom Crispy',cat:'Starters',price:240,available:true,veg:true},
+  {id:5,name:'Dal Makhani',cat:'Main Course',price:260,available:true,veg:true},
+  {id:6,name:'Butter Chicken',cat:'Main Course',price:380,available:true,veg:false},
+  {id:7,name:'Palak Paneer',cat:'Main Course',price:290,available:true,veg:true},
+  {id:8,name:'Lamb Rogan Josh',cat:'Main Course',price:460,available:false,veg:false},
+  {id:9,name:'Garlic Naan',cat:'Breads',price:60,available:true,veg:true},
+  {id:11,name:'Gulab Jamun',cat:'Desserts',price:120,available:true,veg:true},
+  {id:13,name:'Mango Lassi',cat:'Beverages',price:120,available:true,veg:true},
+];
+
+let orders = [
+  { id:1001, table:3, items:[{qty:2,name:'Paneer Tikka'},{qty:1,name:'Mango Lassi'}], amount:680, createdAt: Date.now()-420000, status:'ORDERED' },
+  { id:1002, table:7, items:[{qty:1,name:'Butter Chicken'},{qty:2,name:'Garlic Naan'}], amount:500, createdAt: Date.now()-180000, status:'ORDERED' },
+  { id:1003, table:1, items:[{qty:1,name:'Lamb Rogan Josh'},{qty:1,name:'Laccha Paratha'}], amount:510, createdAt: Date.now()-600000, status:'IN_PROGRESS' },
+  { id:1004, table:9, items:[{qty:3,name:'Mushroom Crispy'},{qty:2,name:'Fresh Lime Soda'}], amount:880, createdAt: Date.now()-900000, status:'READY' },
+];
+
+const TABLES = Array.from({length:12},(_,i)=>i+1);
+
+function getTableStatus(num) {
+  const hasOrder = orders.some(o => o.table === num && !['DELIVERED','CANCELLED'].includes(o.status));
+  return hasOrder ? 'occupied' : 'free';
+}
+
+function renderOrders() {
+  const active = orders.filter(o => !['DELIVERED','CANCELLED'].includes(o.status));
+  const html = active.map(o => {
+    const preview = o.items.map(i=>`${i.qty}× ${i.name}`).join(', ');
+    let actionHtml = '';
+    if(o.status === 'ORDERED')     actionHtml = `<button class="act-btn start" onclick="updateStatus(${o.id},'IN_PROGRESS')">Start</button>`;
+    else if(o.status === 'IN_PROGRESS') actionHtml = `<button class="act-btn ready" onclick="updateStatus(${o.id},'READY')">Ready</button>`;
+    else if(o.status === 'READY')  actionHtml = `<button class="act-btn deliver" onclick="updateStatus(${o.id},'DELIVERED')">Deliver</button>`;
+    return `
+      <div class="order-row">
+        <div class="order-id">#${o.id}</div>
+        <div><span class="table-tag">Table ${o.table}</span></div>
+        <div class="items-preview">${preview}</div>
+        <div class="amount">₹${o.amount}</div>
+        <div><span class="status-badge ${o.status}">${o.status.replace('_',' ')}</span></div>
+        <div class="action-cell">${actionHtml}</div>
+      </div>`;
+  }).join('');
+  document.getElementById('ordersList').innerHTML = html || `<div style="text-align:center;padding:2rem;color:var(--dim);font-size:0.875rem">No active orders</div>`;
+
+  const newC  = orders.filter(o=>o.status==='ORDERED').length;
+  const progC = orders.filter(o=>o.status==='IN_PROGRESS').length;
+  const readyC= orders.filter(o=>o.status==='READY').length;
+  document.getElementById('sTotal').textContent = active.length;
+  document.getElementById('sNew').textContent   = newC;
+  document.getElementById('sProg').textContent  = progC;
+  document.getElementById('sReady').textContent = readyC;
+  document.getElementById('navBadge').textContent = active.length;
+
+  // Waiter badge
+  const wb = document.getElementById('waiterBadge');
+  wb.textContent = readyC;
+  wb.style.display = readyC > 0 ? '' : 'none';
+}
+
+function renderWaiter() {
+  const ready = orders.filter(o=>o.status==='READY');
+  const noReady = document.getElementById('noReady');
+  const rc = document.getElementById('readyCards');
+  if(ready.length === 0) {
+    noReady.style.display='block'; rc.style.display='none';
+  } else {
+    noReady.style.display='none'; rc.style.display='grid';
+    rc.innerHTML = ready.map(o=>`
+      <div class="ready-card">
+        <div class="ready-card-header">
+          <div>
+            <div class="ready-card-table">Table ${o.table}</div>
+            <div class="ready-card-id">Order #${o.id}</div>
+          </div>
+          <span style="font-size:1.5rem">🍽️</span>
+        </div>
+        <div class="ready-card-body">
+          ${o.items.map(i=>`<div class="ready-item"><span class="ri-qty">${i.qty}×</span>${i.name}</div>`).join('')}
+        </div>
+        <div class="ready-card-footer">
+          <button class="deliver-btn" onclick="updateStatus(${o.id},'DELIVERED')">Mark as Delivered ✓</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function renderTables() {
+  document.getElementById('tablesGrid').innerHTML = TABLES.map(n => {
+    const status = getTableStatus(n);
+    const tableOrders = orders.filter(o=>o.table===n && !['DELIVERED','CANCELLED'].includes(o.status));
+    return `
+      <div class="table-tile ${status}">
+        <div class="table-num">T${n}</div>
+        <div class="table-status">${status}</div>
+        ${tableOrders.length ? `<div class="table-orders">${tableOrders.length} order${tableOrders.length>1?'s':''}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function renderMenu() {
+  document.getElementById('menuList').innerHTML = MENU_ITEMS.map(item=>`
+    <div class="order-row" style="grid-template-columns:1fr 100px 90px 80px">
+      <div>
+        <span style="font-weight:500">${item.name}</span>
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${item.veg?'#16a34a':'#dc2626'};margin-left:6px;vertical-align:middle"></span>
+      </div>
+      <div style="color:var(--muted);font-size:0.8rem">${item.cat}</div>
+      <div style="font-weight:600">₹${item.price}</div>
+      <div>
+        <label style="cursor:pointer;display:flex;align-items:center;gap:0.4rem">
+          <input type="checkbox" ${item.available?'checked':''} onchange="toggleItem(${item.id},this.checked)" style="cursor:pointer">
+          <span style="font-size:0.78rem;color:${item.available?'var(--green)':'var(--red)'}">${item.available?'On':'Off'}</span>
+        </label>
+      </div>
+    </div>`).join('');
+}
+
+function toggleItem(id, val) {
+  const item = MENU_ITEMS.find(m=>m.id===id);
+  if(item) item.available = val;
+  showNotif(`${item.name} marked ${val?'available':'unavailable'}`);
+  renderMenu();
+}
+
+function updateStatus(orderId, newStatus) {
+  const order = orders.find(o=>o.id===orderId);
+  if(!order) return;
+  const prev = order.status;
+  order.status = newStatus;
+  if(newStatus === 'DELIVERED') {
+    showNotif(`Order #${orderId} delivered to Table ${order.table} ✓`);
+    setTimeout(() => {
+      orders = orders.filter(o=>o.id!==orderId);
+      renderAll();
+    }, 1000);
+  } else {
+    showNotif(`Order #${orderId} → ${newStatus.replace('_',' ')}`);
+  }
+  renderAll();
+}
+
+function renderAll() {
+  renderOrders();
+  renderWaiter();
+  renderTables();
+  renderMenu();
+}
+
+let currentView = 'counter';
+function switchView(view, btn) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  ['counter','waiter','tables','menu'].forEach(v => {
+    document.getElementById(`view-${v}`).style.display = v===view ? 'block' : 'none';
+  });
+  const titles = {counter:'Counter Overview',waiter:'Waiter View',tables:'Table Status',menu:'Menu Manager'};
+  document.getElementById('mainTitle').textContent = titles[view];
+  currentView = view;
+}
+
+function showNotif(msg) {
+  document.getElementById('notifText').textContent = msg;
+  const n = document.getElementById('notif');
+  n.classList.add('show');
+  setTimeout(()=>n.classList.remove('show'), 3000);
+}
+
+// Simulate new order
+setTimeout(()=>{
+  orders.unshift({id:1005,table:6,items:[{qty:2,name:'Chicken 65'},{qty:1,name:'Masala Chai'}],amount:700,createdAt:Date.now(),status:'ORDERED'});
+  renderAll();
+  showNotif('New order from Table 6!');
+},8000);
+
+setTimeout(()=>{
+  orders.unshift({id:1006,table:2,items:[{qty:1,name:'Dal Makhani'},{qty:2,name:'Garlic Naan'}],amount:380,createdAt:Date.now(),status:'ORDERED'});
+  renderAll();
+  showNotif('New order from Table 2!');
+},16000);
+
+// Clock
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clock').textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+},1000);
+
+renderAll();
+</script>
+</body>
+</html>
